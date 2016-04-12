@@ -1,0 +1,150 @@
+<html>
+
+    <head>
+        <meta charset="UTF-8">
+        <title>FRS</title>
+        <style type="text/css">
+            body {
+                background-color: dimgray;
+                width: 90%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            h1, h2 {
+                color: snow;
+                text-align: center;
+            }
+
+            form{
+                text-align: center;
+            }
+
+            input{
+                background-color: blueviolet;
+                width: 1000px;
+                height: 30px;
+                border: none;
+                text-align: center;
+                color: white;
+                font-size: medium;
+            }
+
+            div{
+                width: 1204px;
+                margin-top: 10px;
+                margin: auto;
+            }
+        </style>
+        <script src="http://canvasjs.com/assets/script/canvasjs.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+	$( document ).ready(function() {
+{#        setTimeout(draw, 100);#}
+{##}
+{#    })#}
+{#    function draw() {#}
+
+        var date = [];
+        var speed = [];
+        var altitude = [];
+{#      var tab = [['Tue 18:01:44', '286', '1,100'], ['Tue 18:31:59', '291', '1,800'], ['Tue 19:00:14', '293', '2,400'], ['Tue 19:32:29', '332', '2,700']];#}
+        var tab = {{ data_py | safe }}
+
+        for(var i=0; i<tab.length; i++){
+            var dataTemp = tab[i][0].split(' ');
+            date[i] = dataTemp[1].split(':');
+            speed[i] = tab[i][1];
+            altitude[i] = tab[i][2];
+        }
+
+        var timeInterval = date[ date.length-1 ][0] - date[0][0];
+        if( timeInterval<0 )
+            timeInterval = 24 - timeInterval;
+        if( timeInterval< 1)
+            timeInterval = 10;
+        else if( timeInterval< 2)
+            timeInterval = 15;
+        else if( timeInterval< 12)
+            timeInterval = 30;
+        else
+            timeInterval = 60;
+
+        var speed_char1 = [];
+        var altitude_char1 = [];
+        for(var i=0; i<tab.length; i++){
+            speed_char1[i] = { x: new Date(2016, 03, 6, parseInt(date[i][0]), parseInt(date[i][1]), parseInt(date[i][2]) ), y: parseFloat(speed[i]) };
+            altitude_char1[i] = { x: new Date(2016, 03, 6, parseInt(date[i][0]), parseInt(date[i][1]), parseInt(date[i][2]) ), y: parseFloat(altitude[i])*1000 };
+        }
+
+        CanvasJS.addColorSet("oneColor",
+                [//colorSet Array
+                  "#ffea00",
+                ]);
+
+        var chart1 = new CanvasJS.Chart("chartContainer1",{
+      	    title :{
+                fontColor: "#ffffff",
+      		    text: "Playback of recorded data"
+      	    },
+      	    axisX: {
+      		    interval: timeInterval, intervalType: "minute"
+      	    },
+            legend: {fontColor: "#ffffff"},
+            colorSet: "oneColor",
+            width: 1200,
+            animationEnabled: true,
+            animationDuration: 30000,
+            backgroundColor: "#1f1f1f",
+            data: [{
+              showInLegend: true,
+              legendText: "Speed [km/h]",
+              type: "line",
+              dataPoints : speed_char1
+            }
+            ]
+        });
+
+        CanvasJS.addColorSet("oneColor",
+                [//colorSet Array
+                  "#95ff00",
+                ]);
+        var chart2 = new CanvasJS.Chart("chartContainer2",{
+      	    axisX: {
+      		    interval: timeInterval, intervalType: "minute"
+      	    },
+            legend: {fontColor: "#ffffff"},
+            colorSet: "oneColor",
+            width: 1200,
+            animationEnabled: true,
+            animationDuration: 30000,
+            backgroundColor: "#1f1f1f",
+            data: [
+            {
+              showInLegend: true,
+              legendText: "Altitude [ft]",
+              type: "line",
+              dataPoints : altitude_char1
+            }
+            ]
+      });
+
+      chart1.render();
+      chart2.render();
+    });
+    </script>
+    </head>
+
+    <body>
+        <h1>Flight recorder simulator</h1>
+        <form method="POST">
+            <input name="url_to_data" id="id_url_data" placeholder="Insert address to flight logs from flightaware.com" />
+            {%  csrf_token  %}
+        </form>
+        <h2 id="flight_info">
+            {{ flight_info_py }}
+        </h2>
+        <div id="chartContainer1" style="height: 300px"></div>
+        <div id="chartContainer2" style="height: 300px"></div>
+    </body>
+</html>
